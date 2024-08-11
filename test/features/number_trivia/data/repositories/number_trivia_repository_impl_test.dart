@@ -39,6 +39,24 @@ void main() {
   const tNumberTriviaModel = NumberTriviaModel(text: 'test text', number: 1);
   const NumberTrivia tNumberTrivia = tNumberTriviaModel;
 
+  runOnlineTests(Function body) {
+    group('device is online', () {
+      setUp(() =>
+          when(() => networkInfo!.isConnected).thenAnswer((_) async => true));
+
+      body();
+    });
+  }
+
+  runOfflineTests(Function body) {
+    group('device is offline', () {
+      setUp(() =>
+          when(() => networkInfo!.isConnected).thenAnswer((_) async => false));
+
+      body();
+    });
+  }
+
   group('getConcreteNumberTrivia', () {
     test('should check is network online', () async {
       when(() => networkInfo!.isConnected).thenAnswer((_) async => true);
@@ -51,75 +69,151 @@ void main() {
 
       verify(() => networkInfo!.isConnected);
     });
+
+    runOnlineTests(() {
+      test('should return data from remote datasource when success', () async {
+        when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
+            .thenAnswer((_) async => tNumberTriviaModel);
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
+
+        final result = await repository!.getConcreteNumberTrivia(tNumber);
+
+        verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
+
+      test('should cache data from remote locally when success', () async {
+        when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
+            .thenAnswer((_) async => tNumberTriviaModel);
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
+
+        await repository!.getConcreteNumberTrivia(tNumber);
+
+        verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
+        verify(() => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
+      });
+
+      test(
+          'should return server failure when the call to remote datasource is not success',
+          () async {
+        when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
+            .thenThrow(ServerException());
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
+
+        final result = await repository!.getConcreteNumberTrivia(tNumber);
+
+        verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
+        verifyNever(
+            () => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
+        expect(result, equals(Left(ServerFailure())));
+      });
+    });
+
+    runOfflineTests(() {
+      test('should return data from cache', () async {
+        when(() => localDatasource!.getLastNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+
+        final result = await repository!.getConcreteNumberTrivia(tNumber);
+
+        verify(() => localDatasource!.getLastNumberTrivia());
+        verifyNever(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
+
+      test('should return data from cache', () async {
+        when(() => localDatasource!.getLastNumberTrivia())
+            .thenThrow(CacheException());
+
+        final result = await repository!.getConcreteNumberTrivia(tNumber);
+
+        verify(() => localDatasource!.getLastNumberTrivia());
+        verifyNever(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
+        expect(result, equals(Left(CacheFailure())));
+      });
+    });
   });
 
-  group('device is online', () {
-    setUp(() =>
-        when(() => networkInfo!.isConnected).thenAnswer((_) async => true));
-
-    test('should return data from remote datasource when success', () async {
-      when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
-          .thenAnswer((_) async => tNumberTriviaModel);
+  group('getRandomNumberTrivia', () {
+    test('should check is network online', () async {
+      when(() => networkInfo!.isConnected).thenAnswer((_) async => true);
+      when(() => remoteDatasource!.getRandomNumberTrivia())
+          .thenAnswer((invocation) async => tNumberTriviaModel);
       when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
           .thenAnswer((_) async => {});
 
-      final result = await repository!.getConcreteNumberTrivia(tNumber);
+      repository?.getRandomNumberTrivia();
 
-      verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
-      expect(result, equals(const Right(tNumberTrivia)));
+      verify(() => networkInfo!.isConnected);
     });
 
-    test('should cache data from remote locally when success', () async {
-      when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
-          .thenAnswer((_) async => tNumberTriviaModel);
-      when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
-          .thenAnswer((_) async => {});
+    runOnlineTests(() {
+      test('should return data from remote datasource when success', () async {
+        when(() => remoteDatasource!.getRandomNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
 
-      await repository!.getConcreteNumberTrivia(tNumber);
+        final result = await repository!.getRandomNumberTrivia();
 
-      verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
-      verify(() => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
+        verify(() => remoteDatasource!.getRandomNumberTrivia());
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
+
+      test('should cache data from remote locally when success', () async {
+        when(() => remoteDatasource!.getRandomNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
+
+        await repository!.getRandomNumberTrivia();
+
+        verify(() => remoteDatasource!.getRandomNumberTrivia());
+        verify(() => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
+      });
+
+      test(
+          'should return server failure when the call to remote datasource is not success',
+          () async {
+        when(() => remoteDatasource!.getRandomNumberTrivia())
+            .thenThrow(ServerException());
+        when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
+            .thenAnswer((_) async => {});
+
+        final result = await repository!.getRandomNumberTrivia();
+
+        verify(() => remoteDatasource!.getRandomNumberTrivia());
+        verifyNever(
+            () => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
+        expect(result, equals(Left(ServerFailure())));
+      });
     });
 
-    test(
-        'should return server failure when the call to remote datasource is not success', () async {
-      when(() => remoteDatasource!.getConcreteNumberTrivia(any()))
-          .thenThrow(ServerException());
-      when(() => localDatasource?.cacheNumberTrivia(tNumberTriviaModel))
-          .thenAnswer((_) async => {});
+    runOfflineTests(() {
+      test('should return data from cache', () async {
+        when(() => localDatasource!.getLastNumberTrivia())
+            .thenAnswer((_) async => tNumberTriviaModel);
 
-      final result = await repository!.getConcreteNumberTrivia(tNumber);
+        final result = await repository!.getRandomNumberTrivia();
 
-      verify(() => remoteDatasource!.getConcreteNumberTrivia(tNumber));
-      verifyNever(() => localDatasource!.cacheNumberTrivia(tNumberTriviaModel));
-      expect(result, equals(Left(ServerFailure())));
-    });
-  });
+        verify(() => localDatasource!.getLastNumberTrivia());
+        verifyNever(() => remoteDatasource!.getRandomNumberTrivia());
+        expect(result, equals(const Right(tNumberTrivia)));
+      });
 
-  group('device is offline', () {
-    setUp(() =>
-        when(() => networkInfo!.isConnected).thenAnswer((_) async => false));
+      test('should return CacheFailure if no cache exist', () async {
+        when(() => localDatasource!.getLastNumberTrivia())
+            .thenThrow(CacheException());
 
-    test('should return data from cache', () async {
-      when(() => localDatasource!.getLastNumberTrivia())
-          .thenAnswer((_) async => tNumberTriviaModel);
+        final result = await repository!.getRandomNumberTrivia();
 
-      final result = await repository!.getConcreteNumberTrivia(tNumber);
-
-      verify(() => localDatasource!.getLastNumberTrivia());
-      verifyNever(()=>remoteDatasource!.getConcreteNumberTrivia(tNumber));
-      expect(result, equals(const Right(tNumberTrivia)));
-    });
-
-    test('should return data from cache', () async {
-      when(() => localDatasource!.getLastNumberTrivia())
-          .thenThrow(CacheException());
-
-      final result = await repository!.getConcreteNumberTrivia(tNumber);
-
-      verify(() => localDatasource!.getLastNumberTrivia());
-      verifyNever(()=>remoteDatasource!.getConcreteNumberTrivia(tNumber));
-      expect(result, equals(Left(CacheFailure())));
+        verify(() => localDatasource!.getLastNumberTrivia());
+        verifyNever(() => remoteDatasource!.getRandomNumberTrivia());
+        expect(result, equals(Left(CacheFailure())));
+      });
     });
   });
 }
