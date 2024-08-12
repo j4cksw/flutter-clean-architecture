@@ -72,7 +72,6 @@ void main() {
   });
 
   group('getRandomNumberTrivia', () {
-    const number = 1;
     final numberTriviaModel =
         NumberTriviaModel.fromJson(json.decode(fixture('trivia.json')));
 

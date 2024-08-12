@@ -6,10 +6,7 @@ abstract class UseCase<Type, Params> {
   Future<Either<Failure, Type>> call(Params params);
 }
 
-class NoParams implements Equatable {
+class NoParams extends Equatable {
   @override
   List<Object?> get props => [];
-
-  @override
-  bool? get stringify => false;
 }

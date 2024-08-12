@@ -17,15 +17,12 @@ class GetConcreteNumberTrivia implements UseCase<NumberTrivia, Params> {
   }
 }
 
-class Params implements Equatable {
+class Params extends Equatable {
   final int number;
 
   const Params({ required this.number});
 
-
   @override
   List<Object?> get props => [number];
 
-  @override
-  bool? get stringify => true;
 }
