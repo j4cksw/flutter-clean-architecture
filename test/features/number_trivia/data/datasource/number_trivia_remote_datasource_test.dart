@@ -49,7 +49,7 @@ void main() {
       numberTriviaRemoteDatasource!.getConcreteNumberTrivia(number);
 
       verify(() => mockHttpClient!.get(
-          Uri(path: "http://numbersapi.com/$number"),
+          Uri.parse("http://numbersapi.com/$number"),
           headers: {'Content-type': 'application/json'}));
     });
 
