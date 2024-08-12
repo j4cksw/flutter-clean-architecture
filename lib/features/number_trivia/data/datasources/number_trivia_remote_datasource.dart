@@ -21,11 +21,11 @@ class NumberTriviaRemoteDatasourceImpl implements NumberTriviaRemoteDatasource {
   Future<NumberTriviaModel> getConcreteNumberTrivia(int number) => _getFromUrl("$number");
 
   @override
-  Future<NumberTriviaModel> getRandomNumberTrivia() => _getFromUrl("random");
+  Future<NumberTriviaModel> getRandomNumberTrivia() => _getFromUrl("random/trivia");
 
   Future<NumberTriviaModel> _getFromUrl(url) async {
     final response = await httpClient.get(
-        Uri(path: "http://numbersapi.com/$url"),
+        Uri.parse("http://numbersapi.com/$url"),
         headers: {'Content-type': 'application/json'});
 
     if (response.statusCode != 200) {

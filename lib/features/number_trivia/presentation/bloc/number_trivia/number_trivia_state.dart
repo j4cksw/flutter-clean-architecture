@@ -5,6 +5,7 @@ sealed class NumberTriviaState extends Equatable {
 
   @override
   List<Object> get props => [];
+
 }
 
 final class Empty extends NumberTriviaState {}

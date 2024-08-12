@@ -82,7 +82,7 @@ void main() {
       numberTriviaRemoteDatasource!.getRandomNumberTrivia();
 
       verify(() => mockHttpClient!.get(
-          Uri(path: "http://numbersapi.com/random"),
+          Uri.parse("http://numbersapi.com/random/trivia"),
           headers: {'Content-type': 'application/json'}));
     });
 
